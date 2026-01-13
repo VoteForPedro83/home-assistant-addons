@@ -1,3 +1,6 @@
-#!/command/with-contenv sh
+#!/bin/sh
 set -e
-exec uvicorn app:app --host 0.0.0.0 --port 8000
+
+# Start your app (pick ONE)
+exec python3 /app/app.py
+# OR: exec uvicorn app:app --host 0.0.0.0 --port 8000
