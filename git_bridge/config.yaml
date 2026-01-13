@@ -5,7 +5,6 @@ version: "1.0.2"
 url: https://github.com/VoteForPedro83/home-assistant-addons
 arch:
   - amd64
-
 startup: services
 boot: auto
 
