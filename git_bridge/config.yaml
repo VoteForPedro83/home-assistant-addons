@@ -12,7 +12,6 @@ boot: auto
 ports:
   8000/tcp: 8000
 
-# Optional but nice: show a "Open Web UI" link in the add-on page
 webui: "http://[HOST]:[PORT:8000]"
 
 options: {}
