@@ -1,7 +1,7 @@
 name: Git Bridge (PR Bot)
 slug: git_bridge
 description: Secure GitHub PR bridge for ChatGPT Actions
-version: "1.0.2"
+version: "1.0.3"
 url: https://github.com/VoteForPedro83/home-assistant-addons
 
 arch:
@@ -12,6 +12,8 @@ boot: auto
 
 ports:
   8000/tcp: 8000
+
+webui: http://[HOST]:8000
 
 options: {}
 schema: {}
