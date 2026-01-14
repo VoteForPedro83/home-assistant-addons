@@ -17,5 +17,7 @@ COPY app.py /app/app.py
 # s6 service files
 COPY rootfs/ /
 
+RUN chmod +x /etc/services.d/git-bridge/run
+
 # make sure run file is executable
 RUN chmod +x /etc/services.d/git-bridge/run
