@@ -1,7 +1,7 @@
 name: "Git Bridge (PR Bot)"
-slug: "95786995_git_bridge"
+slug: "git_bridge"
 description: "Secure GitHub PR bridge for ChatGPT Actions"
-version: "1.0.5"
+version: "1.0.6"
 url: "https://github.com/VoteForPedro83/home-assistant-addons"
 
 arch:
@@ -13,17 +13,12 @@ arch:
 
 startup: services
 boot: auto
-
-# CRITICAL: disable Docker init (tini). s6 must be PID 1.
 init: false
-
-# Keep this on (you already have it on, but we pin it here too)
 protected: true
 
 ports:
   8000/tcp: 8000
 
-# Fix Supervisor webui placeholder format
 webui: "http://[HOST]:[PORT:8000]"
 
 options: {}
