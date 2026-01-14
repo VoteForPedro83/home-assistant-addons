@@ -1,13 +1,13 @@
 ARG BUILD_FROM
 FROM ${BUILD_FROM}
 
-# Copy the application entry file (it lives directly in git_bridge/)
+# App entrypoint lives directly in git_bridge/
 COPY app.py /app.py
 
-# Copy s6 service definitions
+# s6 services
 COPY rootfs /
 
-# Ensure service run script is executable (avoids GitHub exec-bit issues)
+# Ensure run script is executable
 RUN chmod +x /etc/services.d/git-bridge/run
 
 EXPOSE 8000
