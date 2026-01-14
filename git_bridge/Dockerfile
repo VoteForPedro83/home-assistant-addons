@@ -4,16 +4,19 @@ FROM ${BUILD_FROM}
 # System packages
 RUN apk add --no-cache python3 py3-pip
 
-# Create an isolated venv so we don't violate PEP 668
-RUN python3 -m venv /opt/venv
-ENV PATH="/opt/venv/bin:${PATH}"
+# App directory
+WORKDIR /app
+
+# Create venv (avoids PEP 668 issues) and upgrade installer tooling
+RUN python3 -m venv /opt/venv \
+  && /opt/venv/bin/pip install --no-cache-dir --upgrade pip setuptools wheel
 
 # Install Python deps into the venv
-COPY requirements.txt /requirements.txt
-RUN pip install --no-cache-dir -r /requirements.txt
+COPY requirements.txt /app/requirements.txt
+RUN /opt/venv/bin/pip install --no-cache-dir -r /app/requirements.txt
 
-# Copy app (app.py lives directly in git_bridge/)
-COPY app.py /app.py
+# Copy app (now placed at /app/app.py so module name "app" is unambiguous)
+COPY app.py /app/app.py
 
 # Copy s6 services
 COPY rootfs /
