@@ -13,7 +13,12 @@ arch:
 
 startup: services
 boot: auto
+
+# Required when using s6-overlay (v3+) to avoid Docker's default init interfering
 init: false
+
+# Force Supervisor protected mode ON (unprotected mode can break s6 PID1)
+protected: true
 
 ports:
   8000/tcp: 8000
