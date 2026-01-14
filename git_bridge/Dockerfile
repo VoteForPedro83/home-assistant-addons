@@ -1,20 +1,22 @@
-ARG BUILD_FROM
+ARG BUILD_FROM=ghcr.io/home-assistant/amd64-base:latest
 FROM ${BUILD_FROM}
 
-# Install python and build deps for common wheels
+# System packages
 RUN apk add --no-cache python3 py3-pip
 
-# Copy requirements and install Python deps
-COPY requirements.txt /requirements.txt
-RUN pip3 install --no-cache-dir -r /requirements.txt
+# Create an isolated venv so we don't violate PEP 668
+RUN python3 -m venv /opt/venv
+ENV PATH="/opt/venv/bin:${PATH}"
 
-# Copy application entry file (it lives directly in git_bridge/)
+# Install Python deps into the venv
+COPY requirements.txt /requirements.txt
+RUN pip install --no-cache-dir -r /requirements.txt
+
+# Copy app (app.py lives directly in git_bridge/)
 COPY app.py /app.py
 
 # Copy s6 services
 COPY rootfs /
-
-# Ensure run script is executable
 RUN chmod +x /etc/services.d/git-bridge/run
 
 EXPOSE 8000
