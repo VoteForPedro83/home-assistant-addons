@@ -1,7 +1,7 @@
 name: "Git Bridge (PR Bot)"
-slug: "git_bridge"
-description: "Exposes an API for GitHub PR automation and Home Assistant GitOps workflows."
-version: "1.0.0"
+slug: "95786995_git_bridge"
+description: "Secure GitHub PR bridge for ChatGPT Actions"
+version: "1.0.4"
 url: "https://github.com/VoteForPedro83/home-assistant-addons"
 
 arch:
@@ -14,15 +14,16 @@ arch:
 startup: services
 boot: auto
 
-# Required when using s6-overlay (v3+) to avoid Docker's default init interfering
+# CRITICAL: disable Docker init (tini). s6 must be PID 1.
 init: false
 
-# Force Supervisor protected mode ON (unprotected mode can break s6 PID1)
+# Keep this on (you already have it on, but we pin it here too)
 protected: true
 
 ports:
   8000/tcp: 8000
 
+# Fix Supervisor webui placeholder format
 webui: "http://[HOST]:[PORT:8000]"
 
 options: {}
