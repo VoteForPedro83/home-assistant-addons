@@ -1,10 +1,14 @@
 ARG BUILD_FROM
 FROM ${BUILD_FROM}
 
-# Install python3 (and pip in case your app needs it)
+# Install python and build deps for common wheels
 RUN apk add --no-cache python3 py3-pip
 
-# Copy the application entry file (it lives directly in git_bridge/)
+# Copy requirements and install Python deps
+COPY requirements.txt /requirements.txt
+RUN pip3 install --no-cache-dir -r /requirements.txt
+
+# Copy application entry file (it lives directly in git_bridge/)
 COPY app.py /app.py
 
 # Copy s6 services
