@@ -1,23 +1,16 @@
-ARG BUILD_FROM=ghcr.io/home-assistant/amd64-base:3.20
+ARG BUILD_FROM
 FROM ${BUILD_FROM}
 
-# Python + venv support
-RUN apk add --no-cache python3 py3-pip py3-virtualenv
-
-# Create and use a venv so pip installs are allowed (avoids PEP 668)
-RUN python3 -m venv /opt/venv \
-  && /opt/venv/bin/pip install --no-cache-dir --upgrade pip \
-  && /opt/venv/bin/pip install --no-cache-dir fastapi uvicorn requests
-
-ENV PATH="/opt/venv/bin:$PATH"
-
 WORKDIR /app
-COPY app.py /app/app.py
 
-# s6 service files
-COPY rootfs/ /
+# Copy application code
+# Your repo should contain: git_bridge/app/app.py
+COPY app /app
 
+# Copy s6 service definitions
+COPY rootfs /
+
+# Ensure service run script is executable (avoids GitHub exec-bit issues)
 RUN chmod +x /etc/services.d/git-bridge/run
 
-# make sure run file is executable
-RUN chmod +x /etc/services.d/git-bridge/run
+EXPOSE 8000
