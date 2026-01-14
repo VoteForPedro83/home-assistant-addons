@@ -1,11 +1,8 @@
 ARG BUILD_FROM
 FROM ${BUILD_FROM}
 
-WORKDIR /app
-
-# Copy application code
-# Your repo should contain: git_bridge/app/app.py
-COPY app /app
+# Copy the application entry file (it lives directly in git_bridge/)
+COPY app.py /app.py
 
 # Copy s6 service definitions
 COPY rootfs /
