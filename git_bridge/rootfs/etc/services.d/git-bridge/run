@@ -1,5 +1,5 @@
 #!/bin/sh
 set -e
 
-# Always run uvicorn using the venv python to guarantee deps are available
-exec /opt/venv/bin/python -m uvicorn app:app --host 0.0.0.0 --port 8000
+# Make sure uvicorn can import from /app regardless of environment
+exec /opt/venv/bin/python -m uvicorn app:app --app-dir /app --host 0.0.0.0 --port 8000
