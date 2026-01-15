@@ -1,34 +1,19 @@
 #!/bin/sh
 set -e
 
-echo "=== git-bridge debug: whoami ==="
-id || true
+echo "=== git-bridge boot ==="
+echo "PWD=$(pwd)"
+echo "--- /app listing ---"
+ls -ლა /app || true
 
-echo "=== git-bridge debug: pwd ==="
-pwd || true
+echo "--- venv python ---"
+/opt/venv/bin/python -V || true
 
-echo "=== git-bridge debug: ls / ==="
-ls -la / || true
+echo "--- pip freeze (first 50) ---"
+/opt/venv/bin/pip freeze | head -n 50 || true
 
-echo "=== git-bridge debug: ls /app ==="
-ls -la /app || true
+echo "--- test import ---"
+/opt/venv/bin/python -c "import sys; sys.path.insert(0,'/app'); import app; print('IMPORTED OK', app.app)" || true
 
-echo "=== git-bridge debug: find app.py ==="
-find / -maxdepth 4 -name "app.py" 2>/dev/null || true
-
-echo "=== git-bridge debug: python sys.path ==="
-/opt/venv/bin/python - <<'PY' || true
-import sys
-print("\n".join(sys.path))
-PY
-
-echo "=== git-bridge debug: try import app ==="
-/opt/venv/bin/python - <<'PY' || true
-import importlib
-m = importlib.import_module("app")
-print("Imported app module from:", getattr(m, "__file__", None))
-print("Has attribute 'app':", hasattr(m, "app"))
-PY
-
-echo "=== starting uvicorn ==="
+echo "--- starting uvicorn ---"
 exec /opt/venv/bin/python -m uvicorn app:app --app-dir /app --host 0.0.0.0 --port 8000
