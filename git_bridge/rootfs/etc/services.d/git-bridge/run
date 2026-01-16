@@ -1,54 +1,30 @@
-# 5) Overwrite any run script that contains your old debug marker
-#    This ensures we hit the *actual* one being executed.
-for f in $(find /data -type f -path "*/rootfs/etc/services.d/*/run" 2>/dev/null); do
-  if grep -q "git-bridge debug" "$f" 2>/dev/null; then
-    echo "=== Replacing run script: $f ==="
-    cat > "$f" <<'EOF'
-#!/bin/sh
-set -eu
+#!/usr/bin/with-contenv bash
+set -e
 
-echo "=== git-bridge: starting ==="
-echo "pwd before cd: $(pwd)"
-echo "ls /app:"; ls -la /app || true
+echo "=== git-bridge startup ==="
+echo "whoami:"
+whoami
+echo "pwd:"
+pwd
 
-# Run from /app (where app.py lives)
+echo "ls /app:"
+ls -la /app
+
+echo "Setting PYTHONPATH=/app"
+export PYTHONPATH=/app
+
+echo "Testing python import:"
+python3 - << 'EOF'
+import sys
+print("sys.path =", sys.path)
+import app
+print("Imported app OK")
+print("FastAPI app object:", getattr(app, "app", None))
+EOF
+
+echo "Starting uvicorn (this must stay running)..."
 cd /app
 
-# Ensure /app is importable as a module path (so `import app` works for /app/app.py)
-export PYTHONPATH="/app:${PYTHONPATH:-}"
-
-echo "pwd after cd: $(pwd)"
-echo "PYTHONPATH=${PYTHONPATH}"
-
-# Show python + uvicorn presence (inside HA python venv if present)
-if [ -x /opt/venv/bin/python ]; then
-  PY=/opt/venv/bin/python
-else
-  PY=python
-fi
-
-echo "python:"; $PY -V || true
-echo "uvicorn location:"; $PY -c "import uvicorn; print(uvicorn.__file__)" || true
-
-# Sanity check: import app module from /app/app.py and ensure `app` ASGI variable exists
-$PY - <<'PY'
-import sys, importlib
-print("sys.path=", sys.path)
-m = importlib.import_module("app")
-print("import app OK:", m)
-print("ASGI app object:", getattr(m, "app", None))
-PY
-
-echo "=== starting uvicorn ==="
-exec $PY -m uvicorn app:app --host 0.0.0.0 --port 8000
-EOF
-    chmod +x "$f"
-  fi
-done
-
-# 6) Rebuild and start
-ha addons rebuild 95786995_git_bridge
-ha addons start 95786995_git_bridge
-
-# 7) Show logs
-ha addons logs 95786995_git_bridge
+exec python3 -m uvicorn app:app \
+  --host 0.0.0.0 \
+  --port 8000
