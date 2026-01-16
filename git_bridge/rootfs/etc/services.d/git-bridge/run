@@ -1,20 +1,54 @@
-# 1) Stop the add-on so it isn't holding files open
-ha addons stop 95786995_git_bridge
-
-# 2) Find where Home Assistant stored the add-on source on disk
-#    (This is the repo path that contains rootfs/etc/services.d/.../run)
-echo "=== Searching for the add-on folder that contains rootfs/etc/services.d ==="
-find /data -maxdepth 6 -type f -path "*/rootfs/etc/services.d/*/run" 2>/dev/null | grep -E "95786995|git-bridge|git_bridge" || true
-find / -maxdepth 8 -type f -path "*/rootfs/etc/services.d/*/run" 2>/dev/null | grep -E "95786995|git-bridge|git_bridge" || true
-
-# 3) Print all candidates so you can see them clearly
-echo "=== All candidate run files ==="
-find /data -type f -path "*/rootfs/etc/services.d/*/run" 2>/dev/null | sort
-
-# 4) Pick the one that matches your add-on and show its current content
-#    (If multiple match, we'll overwrite the correct one next step)
-echo "=== Showing current content of ALL candidate run files (first 80 lines) ==="
+# 5) Overwrite any run script that contains your old debug marker
+#    This ensures we hit the *actual* one being executed.
 for f in $(find /data -type f -path "*/rootfs/etc/services.d/*/run" 2>/dev/null); do
-  echo "----- $f -----"
-  sed -n '1,80p' "$f" || true
+  if grep -q "git-bridge debug" "$f" 2>/dev/null; then
+    echo "=== Replacing run script: $f ==="
+    cat > "$f" <<'EOF'
+#!/bin/sh
+set -eu
+
+echo "=== git-bridge: starting ==="
+echo "pwd before cd: $(pwd)"
+echo "ls /app:"; ls -la /app || true
+
+# Run from /app (where app.py lives)
+cd /app
+
+# Ensure /app is importable as a module path (so `import app` works for /app/app.py)
+export PYTHONPATH="/app:${PYTHONPATH:-}"
+
+echo "pwd after cd: $(pwd)"
+echo "PYTHONPATH=${PYTHONPATH}"
+
+# Show python + uvicorn presence (inside HA python venv if present)
+if [ -x /opt/venv/bin/python ]; then
+  PY=/opt/venv/bin/python
+else
+  PY=python
+fi
+
+echo "python:"; $PY -V || true
+echo "uvicorn location:"; $PY -c "import uvicorn; print(uvicorn.__file__)" || true
+
+# Sanity check: import app module from /app/app.py and ensure `app` ASGI variable exists
+$PY - <<'PY'
+import sys, importlib
+print("sys.path=", sys.path)
+m = importlib.import_module("app")
+print("import app OK:", m)
+print("ASGI app object:", getattr(m, "app", None))
+PY
+
+echo "=== starting uvicorn ==="
+exec $PY -m uvicorn app:app --host 0.0.0.0 --port 8000
+EOF
+    chmod +x "$f"
+  fi
 done
+
+# 6) Rebuild and start
+ha addons rebuild 95786995_git_bridge
+ha addons start 95786995_git_bridge
+
+# 7) Show logs
+ha addons logs 95786995_git_bridge
