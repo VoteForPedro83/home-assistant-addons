@@ -1,13 +1,20 @@
-#!/bin/sh
-set -eu
+# 1) Stop the add-on so it isn't holding files open
+ha addons stop 95786995_git_bridge
 
-echo "=== git-bridge: starting ==="
+# 2) Find where Home Assistant stored the add-on source on disk
+#    (This is the repo path that contains rootfs/etc/services.d/.../run)
+echo "=== Searching for the add-on folder that contains rootfs/etc/services.d ==="
+find /data -maxdepth 6 -type f -path "*/rootfs/etc/services.d/*/run" 2>/dev/null | grep -E "95786995|git-bridge|git_bridge" || true
+find / -maxdepth 8 -type f -path "*/rootfs/etc/services.d/*/run" 2>/dev/null | grep -E "95786995|git-bridge|git_bridge" || true
 
-# Ensure we run from /app (your app.py and requirements.txt are there)
-cd /app
+# 3) Print all candidates so you can see them clearly
+echo "=== All candidate run files ==="
+find /data -type f -path "*/rootfs/etc/services.d/*/run" 2>/dev/null | sort
 
-# Make sure Python can import from /app (so `import app` works)
-export PYTHONPATH="/app:${PYTHONPATH:-}"
-
-# Start uvicorn using the venv python (most reliable in HA add-ons)
-exec /opt/venv/bin/python -m uvicorn app:app --host 0.0.0.0 --port 8000
+# 4) Pick the one that matches your add-on and show its current content
+#    (If multiple match, we'll overwrite the correct one next step)
+echo "=== Showing current content of ALL candidate run files (first 80 lines) ==="
+for f in $(find /data -type f -path "*/rootfs/etc/services.d/*/run" 2>/dev/null); do
+  echo "----- $f -----"
+  sed -n '1,80p' "$f" || true
+done
