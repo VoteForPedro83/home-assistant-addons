@@ -1,9 +1,27 @@
-#!/usr/bin/with-contenv sh
+#!/bin/sh
 set -e
 
-# Ensure the module path is correct for imports
-cd /app
-export PYTHONPATH="/app"
+echo "=== git-bridge debug ==="
+echo "whoami: $(whoami)"
+echo "pwd: $(pwd)"
+echo "ls /app:"
+ls -la /app || true
 
-# Run uvicorn from the venv (don’t rely on PATH)
+cd /app
+export PYTHONPATH="/app:${PYTHONPATH}"
+
+echo "PYTHONPATH=$PYTHONPATH"
+
+echo "Python version:"
+/opt/venv/bin/python -V || true
+
+echo "Try import app:"
+/opt/venv/bin/python - <<'EOF'
+import sys
+print("sys.path:", sys.path)
+import app
+print("app imported OK:", app)
+EOF
+
+echo "Starting uvicorn..."
 exec /opt/venv/bin/python -m uvicorn app:app --host 0.0.0.0 --port 8000
