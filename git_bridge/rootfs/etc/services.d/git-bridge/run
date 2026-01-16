@@ -1,27 +1,13 @@
 #!/bin/sh
-set -e
+set -eu
 
-echo "=== git-bridge debug ==="
-echo "whoami: $(whoami)"
-echo "pwd: $(pwd)"
-echo "ls /app:"
-ls -la /app || true
+echo "=== git-bridge: starting ==="
 
+# Ensure we run from /app (your app.py and requirements.txt are there)
 cd /app
-export PYTHONPATH="/app:${PYTHONPATH}"
 
-echo "PYTHONPATH=$PYTHONPATH"
+# Make sure Python can import from /app (so `import app` works)
+export PYTHONPATH="/app:${PYTHONPATH:-}"
 
-echo "Python version:"
-/opt/venv/bin/python -V || true
-
-echo "Try import app:"
-/opt/venv/bin/python - <<'EOF'
-import sys
-print("sys.path:", sys.path)
-import app
-print("app imported OK:", app)
-EOF
-
-echo "Starting uvicorn..."
+# Start uvicorn using the venv python (most reliable in HA add-ons)
 exec /opt/venv/bin/python -m uvicorn app:app --host 0.0.0.0 --port 8000
