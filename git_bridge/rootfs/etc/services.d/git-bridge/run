@@ -1,19 +1,9 @@
-#!/bin/sh
+#!/usr/bin/with-contenv sh
 set -e
 
-echo "=== git-bridge boot ==="
-echo "PWD=$(pwd)"
-echo "--- /app listing ---"
-ls -ლა /app || true
+# Ensure the module path is correct for imports
+cd /app
+export PYTHONPATH="/app"
 
-echo "--- venv python ---"
-/opt/venv/bin/python -V || true
-
-echo "--- pip freeze (first 50) ---"
-/opt/venv/bin/pip freeze | head -n 50 || true
-
-echo "--- test import ---"
-/opt/venv/bin/python -c "import sys; sys.path.insert(0,'/app'); import app; print('IMPORTED OK', app.app)" || true
-
-echo "--- starting uvicorn ---"
-exec /opt/venv/bin/python -m uvicorn app:app --app-dir /app --host 0.0.0.0 --port 8000
+# Run uvicorn from the venv (don’t rely on PATH)
+exec /opt/venv/bin/python -m uvicorn app:app --host 0.0.0.0 --port 8000
